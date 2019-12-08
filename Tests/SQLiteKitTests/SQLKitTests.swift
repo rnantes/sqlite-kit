@@ -78,6 +78,15 @@ class SQLiteTests: XCTestCase {
             .from("planets")
             .where("galaxyID", .equal, SQLBind(5))
             .run().wait()
+
+        try self.db.select()
+            .column("*")
+            .from("planets")
+            .join(method: .inner,
+                  table: "galaxies",
+                  from: SQLColumn.init("galaxyID", table: "planets"),
+                  to: SQLColumn.init("id", table: "galaxies"))
+            .run().wait()
     }
 
     var db: SQLDatabase {
