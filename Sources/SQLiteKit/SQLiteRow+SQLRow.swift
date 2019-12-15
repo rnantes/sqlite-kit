@@ -7,7 +7,7 @@ extension SQLiteRow: SQLRow {
         guard let index = self.columns.offsets[column] else {
             return true
         }
-        if self.data[index] == nil {
+        if self.data[index] == .null {
             return true
         }
         return false
