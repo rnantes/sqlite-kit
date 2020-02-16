@@ -1,3 +1,5 @@
+import SQLKit
+
 public struct SQLiteDialect: SQLDialect {
     public var name: String {
         "sqlite"
