@@ -1,9 +1,14 @@
+import Logging
 import SQLiteKit
 import SQLKitBenchmark
 import XCTest
 
 class SQLiteTests: XCTestCase {
-    func testBenchmark() throws {
+    func testEnum() throws {
+        try self.benchmark.testEnum()
+    }
+
+    func testPlanets() throws {
         try self.db.drop(table: "planets")
             .ifExists()
             .run().wait()
@@ -89,8 +94,16 @@ class SQLiteTests: XCTestCase {
             .run().wait()
     }
 
+    func testForeignKeysEnabled() throws {
+        let res = try self.connection.query("PRAGMA foreign_keys").wait()
+        XCTAssertEqual(res[0].column("foreign_keys"), .integer(1))
+    }
+
     var db: SQLDatabase {
         self.connection.sql()
+    }
+    var benchmark: SQLBenchmarker {
+        .init(on: self.db)
     }
     
     var eventLoopGroup: EventLoopGroup!
@@ -98,14 +111,14 @@ class SQLiteTests: XCTestCase {
     var connection: SQLiteConnection!
 
     override func setUp() {
+        XCTAssertTrue(isLoggingConfigured)
         self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 2)
         self.threadPool = NIOThreadPool(numberOfThreads: 2)
         self.threadPool.start()
-        self.connection = try! SQLiteConnection.open(
-            storage: .memory,
-            threadPool: self.threadPool,
-            on: self.eventLoopGroup.next()
-        ).wait()
+        self.connection = try! SQLiteConnectionSource(
+            configuration: .init(storage: .memory, enableForeignKeys: true),
+            threadPool: self.threadPool
+        ).makeConnection(logger: .init(label: "test"), on: self.eventLoopGroup.next()).wait()
     }
 
     override func tearDown() {
@@ -117,3 +130,12 @@ class SQLiteTests: XCTestCase {
         self.eventLoopGroup = nil
     }
 }
+
+let isLoggingConfigured: Bool = {
+    LoggingSystem.bootstrap { label in
+        var handler = StreamLogHandler.standardOutput(label: label)
+        handler.logLevel = .trace
+        return handler
+    }
+    return true
+}()
