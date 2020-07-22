@@ -1,16 +1,13 @@
 extension SQLiteRow: SQLRow {
     public var allColumns: [String] {
-        .init(self.columns.offsets.keys)
+        self.columns.map { $0.name }
     }
 
     public func decodeNil(column: String) throws -> Bool {
-        guard let index = self.columns.offsets[column] else {
-            return true
+        guard let data = self.column(column) else {
+            throw MissingColumn(column: column)
         }
-        if self.data[index] == .null {
-            return true
-        }
-        return false
+        return data == .null
     }
 
     public func contains(column: String) -> Bool {

@@ -39,6 +39,18 @@ public struct SQLiteDialect: SQLDialect {
     public var supportsAutoIncrement: Bool {
         false
     }
+
+    public var alterTableSyntax: SQLAlterTableSyntax {
+        .init(
+            alterColumnDefinitionClause: nil,
+            alterColumnDefinitionTypeKeyword: nil,
+            allowsBatch: false
+        )
+    }
+
+    public var triggerSyntax: SQLTriggerSyntax {
+        return .init(create: [.supportsBody, .supportsCondition])
+    }
     
     public init() { }
 }
